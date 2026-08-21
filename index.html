@@ -138,41 +138,46 @@ function konus(){
     "🎤 Dinliyorum...";
 
   recognition.start();
-
-  recognition.onresult = function(event){
+recognition.onresult = function(event){
 
     const metin = event.results[0][0].transcript.trim();
 
-    // Konuşulan cümlenin tamamını göster
     document.getElementById("hamMetin").value = metin;
 
     let musteri = "";
     let notMetni = metin;
 
-    /*
-      Örnek:
-      "Ahmet abiye bir tane klavye verdim"
-      Müşteri: Ahmet abi
-      Not: Bir tane klavye verdim
-
-      "Bartu Dermenci'ye bir mouse verdim"
-      Müşteri: Bartu Dermenci
-      Not: Bir mouse verdim
-    */
-
-    let eslesme = metin.match(
+    // Önce "Ahmet abiye", "Bartu Dermenci'ye" gibi
+    // yönelme eki olan ifadeleri yakala.
+    const yonelme = metin.match(
         /^(.+?)(?:'ye|'ya|'e|'a|ye|ya)\s+(.+)$/i
     );
 
-    if(eslesme){
-        musteri = eslesme[1].trim();
-        notMetni = eslesme[2].trim();
+    if (yonelme) {
 
-        // "Ahmet abi" + "ye" durumunu düzgün bırak
-        musteri = musteri
-            .replace(/\s+/g, " ")
-            .trim();
+        musteri = yonelme[1].trim();
+        notMetni = yonelme[2].trim();
+
+    } else {
+
+        // Yönelme eki söylenmezse:
+        // "Mazlum Güre bir tane bilgisayar verdim"
+        // "Osman abi 3 adet kamera takılacak"
+        // gibi cümleleri ayır.
+
+        const ayirici = metin.match(
+            /^(.+?)\s+((?:bir|iki|üç|dört|beş|\d+)\s+(?:tane|adet)\b.|kamera\b.|bilgisayar\b.|klavye\b.|mouse\b.|hoparlör\b.|montaj\b.|kurulum\b.|teslim\b.|verd(?:im|ik)\b.|verilecek\b.|takılacak\b.|yapılacak\b.|alınacak\b.)$/i
+        );
+
+        if (ayirici) {
+            musteri = ayirici[1].trim();
+            notMetni = ayirici[2].trim();
+        }
     }
+
+    // Fazla boşlukları temizle
+    musteri = musteri.replace(/\s+/g, " ").trim();
+    notMetni = notMetni.replace(/\s+/g, " ").trim();
 
     document.getElementById("musteri").value = musteri;
     document.getElementById("not").value = notMetni;
