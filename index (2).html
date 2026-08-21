@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Asistan Notlarım</title>
+
+<style>
+body{
+  font-family:Arial,sans-serif;
+  margin:0;
+  background:#f3f4f6;
+  padding:18px;
+}
+.container{
+  max-width:700px;
+  margin:auto;
+}
+.card{
+  background:white;
+  padding:20px;
+  margin-bottom:15px;
+  border-radius:16px;
+}
+h1{text-align:center;}
+input,textarea,select{
+  width:100%;
+  box-sizing:border-box;
+  padding:13px;
+  margin:7px 0 14px;
+  font-size:17px;
+}
+textarea{min-height:100px;}
+button{
+  width:100%;
+  padding:16px;
+  margin:6px 0;
+  font-size:18px;
+  border-radius:10px;
+  cursor:pointer;
+}
+#konus{
+  font-size:22px;
+}
+#mesaj{
+  font-weight:bold;
+  margin-top:12px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<div class="card">
+
+<h1>Asistan Notlarım</h1>
+
+<button id="konus" onclick="konus()">
+🎤 Konuş
+</button>
+
+<p id="dinleme"></p>
+
+<label>Algılanan konuşma</label>
+<textarea id="hamMetin"></textarea>
+
+</div>
+
+<div class="card">
+
+<label>Müşteri</label>
+<input id="musteri" placeholder="Müşteri adı">
+
+<label>Tür</label>
+<select id="tur">
+<option value="Yapılacak">Yapılacak</option>
+<option value="Teslimat">Teslimat</option>
+<option value="Alış">Alış</option>
+<option value="Satış">Satış</option>
+<option value="Görüşme">Görüşme</option>
+<option value="Diğer">Diğer</option>
+</select>
+
+<label>Not</label>
+<textarea id="not"></textarea>
+
+<label>Durum</label>
+<select id="durum">
+<option value="Bekliyor">Bekliyor</option>
+<option value="Tamamlandı">Tamamlandı</option>
+</select>
+
+<button onclick="kaydet()">
+💾 Notu Kaydet
+</button>
+
+<button onclick="temizle()">
+➕ Yeni Not
+</button>
+
+<p id="mesaj"></p>
+
+</div>
+
+</div>
+
+<script>
+
+/*
+BURAYA ÇALIŞAN APPS SCRIPT WEB UYGULAMASI URL'Nİ YAPIŞTIR.
+URL /exec ile bitmeli.
+*/
+
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzgXyQcV7Nb70gHwhvfTmW1tfzp1SRzYcsHsUJeGDelU0SvUdnChmKQVVW4X_YdNwQIBQ/exec";
+
+
+function konus(){
+
+  const SpeechRecognition =
+    window.SpeechRecognition ||
+    window.webkitSpeechRecognition;
+
+  if(!SpeechRecognition){
+    alert("Bu tarayıcı ses tanımayı desteklemiyor.");
+    return;
+  }
+
+  const recognition = new SpeechRecognition();
+
+  recognition.lang = "tr-TR";
+  recognition.interimResults = false;
+  recognition.continuous = false;
+  recognition.maxAlternatives = 1;
+
+  document.getElementById("dinleme").innerText =
+    "🎤 Dinliyorum...";
+
+  recognition.start();
+
+  recognition.onresult = function(event){
+
+    const metin =
+      event.results[0][0].transcript;
+
+    document.getElementById("hamMetin").value =
+      metin;
+
+    document.getElementById("not").value =
+      metin;
+
+    document.getElementById("dinleme").innerText =
+      "✅ Konuşma alındı.";
+  };
+
+  recognition.onerror = function(event){
+
+    document.getElementById("dinleme").innerText =
+      "❌ Ses tanıma hatası: " + event.error;
+  };
+
+  recognition.onend = function(){
+
+    if(
+      document.getElementById("dinleme")
+      .innerText === "🎤 Dinliyorum..."
+    ){
+      document.getElementById("dinleme").innerText =
+        "Dinleme tamamlandı.";
+    }
+  };
+}
+
+
+async function kaydet(){
+
+  if(
+    !SCRIPT_URL ||
+    SCRIPT_URL.includes("BURAYA_WEB")
+  ){
+    alert("Apps Script URL'si henüz girilmemiş.");
+    return;
+  }
+
+  const notMetni =
+    document.getElementById("not").value.trim();
+
+  if(!notMetni){
+    alert("Önce bir not söyle veya yaz.");
+    return;
+  }
+
+  const veri = {
+    musteri:
+      document.getElementById("musteri").value.trim(),
+
+    tur:
+      document.getElementById("tur").value,
+
+    not:
+      notMetni,
+
+    durum:
+      document.getElementById("durum").value
+  };
+
+  document.getElementById("mesaj").innerText =
+    "Kaydediliyor...";
+
+  try{
+
+    await fetch(SCRIPT_URL,{
+      method:"POST",
+      body:JSON.stringify(veri)
+    });
+
+    document.getElementById("mesaj").innerText =
+      "✅ Not kaydedildi.";
+
+  }catch(error){
+
+    document.getElementById("mesaj").innerText =
+      "❌ Gönderme hatası: " + error.message;
+  }
+}
+
+
+function temizle(){
+
+  document.getElementById("hamMetin").value = "";
+  document.getElementById("musteri").value = "";
+  document.getElementById("not").value = "";
+  document.getElementById("tur").value = "Yapılacak";
+  document.getElementById("durum").value = "Bekliyor";
+  document.getElementById("dinleme").innerText = "";
+  document.getElementById("mesaj").innerText = "";
+}
+
+</script>
+
+</body>
+</html>
