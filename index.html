@@ -141,18 +141,45 @@ function konus(){
 
   recognition.onresult = function(event){
 
-    const metin =
-      event.results[0][0].transcript;
+    const metin = event.results[0][0].transcript.trim();
 
-    document.getElementById("hamMetin").value =
-      metin;
+    // Konuşulan cümlenin tamamını göster
+    document.getElementById("hamMetin").value = metin;
 
-    document.getElementById("not").value =
-      metin;
+    let musteri = "";
+    let notMetni = metin;
+
+    /*
+      Örnek:
+      "Ahmet abiye bir tane klavye verdim"
+      Müşteri: Ahmet abi
+      Not: Bir tane klavye verdim
+
+      "Bartu Dermenci'ye bir mouse verdim"
+      Müşteri: Bartu Dermenci
+      Not: Bir mouse verdim
+    */
+
+    let eslesme = metin.match(
+        /^(.+?)(?:'ye|'ya|'e|'a|ye|ya)\s+(.+)$/i
+    );
+
+    if(eslesme){
+        musteri = eslesme[1].trim();
+        notMetni = eslesme[2].trim();
+
+        // "Ahmet abi" + "ye" durumunu düzgün bırak
+        musteri = musteri
+            .replace(/\s+/g, " ")
+            .trim();
+    }
+
+    document.getElementById("musteri").value = musteri;
+    document.getElementById("not").value = notMetni;
 
     document.getElementById("dinleme").innerText =
-      "✅ Konuşma alındı.";
-  };
+        "✅ Konuşma alındı.";
+};
 
   recognition.onerror = function(event){
 
