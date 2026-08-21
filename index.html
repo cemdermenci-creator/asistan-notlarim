@@ -3,34 +3,48 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <title>Asistan Notlarım</title>
 
 <style>
+
 body{
   font-family:Arial,sans-serif;
   margin:0;
   background:#f3f4f6;
   padding:18px;
 }
+
 .container{
   max-width:700px;
   margin:auto;
 }
+
 .card{
   background:white;
   padding:20px;
   margin-bottom:15px;
   border-radius:16px;
 }
-h1{text-align:center;}
-input,textarea,select{
+
+h1{
+  text-align:center;
+}
+
+input,
+textarea,
+select{
   width:100%;
   box-sizing:border-box;
   padding:13px;
   margin:7px 0 14px;
   font-size:17px;
 }
-textarea{min-height:100px;}
+
+textarea{
+  min-height:100px;
+}
+
 button{
   width:100%;
   padding:16px;
@@ -39,13 +53,16 @@ button{
   border-radius:10px;
   cursor:pointer;
 }
+
 #konus{
   font-size:22px;
 }
+
 #mesaj{
   font-weight:bold;
   margin-top:12px;
 }
+
 </style>
 </head>
 
@@ -64,33 +81,48 @@ button{
 <p id="dinleme"></p>
 
 <label>Algılanan konuşma</label>
+
 <textarea id="hamMetin"></textarea>
 
 </div>
 
+
 <div class="card">
 
 <label>Müşteri</label>
-<input id="musteri" placeholder="Müşteri adı">
+
+<input
+  id="musteri"
+  placeholder="Müşteri adı">
 
 <label>Tür</label>
+
 <select id="tur">
+
 <option value="Yapılacak">Yapılacak</option>
 <option value="Teslimat">Teslimat</option>
 <option value="Alış">Alış</option>
 <option value="Satış">Satış</option>
 <option value="Görüşme">Görüşme</option>
 <option value="Diğer">Diğer</option>
+
 </select>
+
 
 <label>Not</label>
+
 <textarea id="not"></textarea>
 
+
 <label>Durum</label>
+
 <select id="durum">
+
 <option value="Bekliyor">Bekliyor</option>
 <option value="Tamamlandı">Tamamlandı</option>
+
 </select>
+
 
 <button onclick="kaydet()">
 💾 Notu Kaydet
@@ -106,14 +138,11 @@ button{
 
 </div>
 
+
 <script>
 
-/*
-BURAYA ÇALIŞAN APPS SCRIPT WEB UYGULAMASI URL'Nİ YAPIŞTIR.
-URL /exec ile bitmeli.
-*/
-
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzgXyQcV7Nb70gHwhvfTmW1tfzp1SRzYcsHsUJeGDelU0SvUdnChmKQVVW4X_YdNwQIBQ/exec";
+const SCRIPT_URL =
+"https://script.google.com/macros/s/AKfycbzgXyQcV7Nb70gHwhvfTmW1tfzp1SRzYcsHsUJeGDelU0SvUdnChmKQVVW4X_YdNwQIBQ/exec";
 
 
 function konus(){
@@ -123,150 +152,386 @@ function konus(){
     window.webkitSpeechRecognition;
 
   if(!SpeechRecognition){
-    alert("Bu tarayıcı ses tanımayı desteklemiyor.");
+
+    alert(
+      "Bu tarayıcı ses tanımayı desteklemiyor."
+    );
+
     return;
   }
 
-  const recognition = new SpeechRecognition();
 
-  recognition.lang = "tr-TR";
-  recognition.interimResults = false;
-  recognition.continuous = false;
-  recognition.maxAlternatives = 1;
+  const recognition =
+    new SpeechRecognition();
 
-  document.getElementById("dinleme").innerText =
+
+  recognition.lang =
+    "tr-TR";
+
+  recognition.interimResults =
+    false;
+
+  recognition.continuous =
+    false;
+
+  recognition.maxAlternatives =
+    1;
+
+
+  document.getElementById(
+    "dinleme"
+  ).innerText =
     "🎤 Dinliyorum...";
 
+
   recognition.start();
-recognition.onresult = function(event){
 
-    const metin = event.results[0][0].transcript.trim();
 
-    document.getElementById("hamMetin").value = metin;
+  recognition.onresult =
+  function(event){
+
+    const metin =
+      event.results[0][0]
+      .transcript
+      .trim();
+
+
+    document.getElementById(
+      "hamMetin"
+    ).value =
+      metin;
+
 
     let musteri = "";
     let notMetni = metin;
 
-    // Önce "Ahmet abiye", "Bartu Dermenci'ye" gibi
-    // yönelme eki olan ifadeleri yakala.
-    const yonelme = metin.match(
-        /^(.+?)(?:'ye|'ya|'e|'a|ye|ya)\s+(.+)$/i
-    );
 
-    if (yonelme) {
+    /*
+    --------------------------------
+    YENİ MÜŞTERİ AYIRMA SİSTEMİ
+    --------------------------------
 
-        musteri = yonelme[1].trim();
-        notMetni = yonelme[2].trim();
+    Kullanıcı:
 
-    } else {
+    "Müşteri Ahmet Yılmaz
+    2 adet kamera takılacak"
 
-        // Yönelme eki söylenmezse:
-        // "Mazlum Güre bir tane bilgisayar verdim"
-        // "Osman abi 3 adet kamera takılacak"
-        // gibi cümleleri ayır.
+    dediğinde:
 
-        const ayirici = metin.match(
-            /^(.+?)\s+((?:bir|iki|üç|dört|beş|\d+)\s+(?:tane|adet)\b.|kamera\b.|bilgisayar\b.|klavye\b.|mouse\b.|hoparlör\b.|montaj\b.|kurulum\b.|teslim\b.|verd(?:im|ik)\b.|verilecek\b.|takılacak\b.|yapılacak\b.|alınacak\b.)$/i
+    Müşteri:
+    Ahmet Yılmaz
+
+    Not:
+    2 adet kamera takılacak
+    */
+
+
+    const musteriBaslangic =
+      metin.match(
+        /\bmüşteri\b\s*/i
+      );
+
+
+    if(musteriBaslangic){
+
+      let kalanMetin =
+        metin
+        .substring(
+          musteriBaslangic.index +
+          musteriBaslangic[0].length
+        )
+        .trim();
+
+
+      /*
+      Müşteri adının nerede
+      biteceğini anlamak için
+      kullanılan kelimeler
+      */
+
+      const ayirici =
+        /\s+(?=(?:\d+\s*(?:adet|tane)?|bir\s+(?:adet|tane)|iki\s+(?:adet|tane)|üç\s+(?:adet|tane)|dört\s+(?:adet|tane)|beş\s+(?:adet|tane)|ürün\b|not\b|fiyat\b|kamera\b|bilgisayar\b|monitör\b|klavye\b|mouse\b|hoparlör\b|yazıcı\b|toner\b|hdmi\b|vga\b|adaptör\b|switch\b|modem\b|nvr\b|dvr\b|montaj\b|kurulum\b|teslim\b|teslimat\b|verdim\b|verdik\b|verilecek\b|götürülecek\b|alınacak\b|satılacak\b|takılacak\b|yapılacak\b|bakılacak\b|gidilecek\b|aranacak\b|görüşülecek\b))/i;
+
+
+      const parcalar =
+        kalanMetin.split(
+          ayirici
         );
 
-        if (ayirici) {
-            musteri = ayirici[1].trim();
-            notMetni = ayirici[2].trim();
-        }
+
+      musteri =
+        parcalar[0]
+        .trim();
+
+
+      notMetni =
+        kalanMetin
+        .substring(
+          musteri.length
+        )
+        .trim();
+
+
+      /*
+      Eğer müşteri adından sonra
+      virgül veya nokta kaldıysa
+      temizle
+      */
+
+      musteri =
+        musteri
+        .replace(
+          /[,.;:]+$/g,
+          ""
+        )
+        .trim();
+
+
+      notMetni =
+        notMetni
+        .replace(
+          /^[,.;:\-\s]+/,
+          ""
+        )
+        .trim();
+
     }
 
-    // Fazla boşlukları temizle
-    musteri = musteri.replace(/\s+/g, " ").trim();
-    notMetni = notMetni.replace(/\s+/g, " ").trim();
 
-    document.getElementById("musteri").value = musteri;
-    document.getElementById("not").value = notMetni;
+    /*
+    Eğer "müşteri" kelimesi
+    söylenmediyse eski sistem
+    devreye girsin
+    */
 
-    document.getElementById("dinleme").innerText =
-        "✅ Konuşma alındı.";
-};
+    else {
 
-  recognition.onerror = function(event){
+      const yonelme =
+        metin.match(
+          /^(.+?)(?:'ye|'ya|'e|'a|ye|ya)\s+(.+)$/i
+        );
 
-    document.getElementById("dinleme").innerText =
-      "❌ Ses tanıma hatası: " + event.error;
+
+      if(yonelme){
+
+        musteri =
+          yonelme[1]
+          .trim();
+
+        notMetni =
+          yonelme[2]
+          .trim();
+
+      }
+
+    }
+
+
+    /*
+    Fazla boşlukları temizle
+    */
+
+    musteri =
+      musteri
+      .replace(
+        /\s+/g,
+        " "
+      )
+      .trim();
+
+
+    notMetni =
+      notMetni
+      .replace(
+        /\s+/g,
+        " "
+      )
+      .trim();
+
+
+    document.getElementById(
+      "musteri"
+    ).value =
+      musteri;
+
+
+    document.getElementById(
+      "not"
+    ).value =
+      notMetni;
+
+
+    document.getElementById(
+      "dinleme"
+    ).innerText =
+      "✅ Konuşma alındı.";
+
   };
 
-  recognition.onend = function(){
+
+  recognition.onerror =
+  function(event){
+
+    document.getElementById(
+      "dinleme"
+    ).innerText =
+      "❌ Ses tanıma hatası: " +
+      event.error;
+
+  };
+
+
+  recognition.onend =
+  function(){
 
     if(
-      document.getElementById("dinleme")
-      .innerText === "🎤 Dinliyorum..."
+      document.getElementById(
+        "dinleme"
+      ).innerText ===
+      "🎤 Dinliyorum..."
     ){
-      document.getElementById("dinleme").innerText =
+
+      document.getElementById(
+        "dinleme"
+      ).innerText =
         "Dinleme tamamlandı.";
+
     }
+
   };
+
 }
+
 
 
 async function kaydet(){
 
   if(
     !SCRIPT_URL ||
-    SCRIPT_URL.includes("BURAYA_WEB")
+    SCRIPT_URL.includes(
+      "BURAYA_WEB"
+    )
   ){
-    alert("Apps Script URL'si henüz girilmemiş.");
+
+    alert(
+      "Apps Script URL'si henüz girilmemiş."
+    );
+
     return;
   }
+
 
   const notMetni =
-    document.getElementById("not").value.trim();
+    document.getElementById(
+      "not"
+    ).value.trim();
+
 
   if(!notMetni){
-    alert("Önce bir not söyle veya yaz.");
+
+    alert(
+      "Önce bir not söyle veya yaz."
+    );
+
     return;
   }
 
+
   const veri = {
+
     musteri:
-      document.getElementById("musteri").value.trim(),
+      document.getElementById(
+        "musteri"
+      ).value.trim(),
 
     tur:
-      document.getElementById("tur").value,
+      document.getElementById(
+        "tur"
+      ).value,
 
     not:
       notMetni,
 
     durum:
-      document.getElementById("durum").value
+      document.getElementById(
+        "durum"
+      ).value
+
   };
 
-  document.getElementById("mesaj").innerText =
+
+  document.getElementById(
+    "mesaj"
+  ).innerText =
     "Kaydediliyor...";
+
 
   try{
 
-    await fetch(SCRIPT_URL,{
-      method:"POST",
-      body:JSON.stringify(veri)
-    });
+    await fetch(
+      SCRIPT_URL,
+      {
+        method:"POST",
+        body:JSON.stringify(
+          veri
+        )
+      }
+    );
 
-    document.getElementById("mesaj").innerText =
+
+    document.getElementById(
+      "mesaj"
+    ).innerText =
       "✅ Not kaydedildi.";
 
-  }catch(error){
-
-    document.getElementById("mesaj").innerText =
-      "❌ Gönderme hatası: " + error.message;
   }
+
+  catch(error){
+
+    document.getElementById(
+      "mesaj"
+    ).innerText =
+      "❌ Gönderme hatası: " +
+      error.message;
+
+  }
+
 }
+
 
 
 function temizle(){
 
-  document.getElementById("hamMetin").value = "";
-  document.getElementById("musteri").value = "";
-  document.getElementById("not").value = "";
-  document.getElementById("tur").value = "Yapılacak";
-  document.getElementById("durum").value = "Bekliyor";
-  document.getElementById("dinleme").innerText = "";
-  document.getElementById("mesaj").innerText = "";
+  document.getElementById(
+    "hamMetin"
+  ).value = "";
+
+  document.getElementById(
+    "musteri"
+  ).value = "";
+
+  document.getElementById(
+    "not"
+  ).value = "";
+
+  document.getElementById(
+    "tur"
+  ).value =
+    "Yapılacak";
+
+  document.getElementById(
+    "durum"
+  ).value =
+    "Bekliyor";
+
+  document.getElementById(
+    "dinleme"
+  ).innerText = "";
+
+  document.getElementById(
+    "mesaj"
+  ).innerText = "";
+
 }
 
 </script>
